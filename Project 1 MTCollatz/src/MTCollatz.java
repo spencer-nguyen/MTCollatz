@@ -12,21 +12,34 @@ import java.util.Scanner;
  *              
  *              
  */
-public class MTCollatz {
+
+class collatzCompute extends Thread{
 	
-	private int COUNTER = 2;
+	collatzCompute(int n){
+		
+		
+		
+		
+		
+		
+		
+		
+	}
 	
-	public static int collatzStoppingTime(int k) {
+	public int getCollatzStoppingTime(int n) {
 		
-		int stoppingTime = 0;
+		int stoppingTime = 0; //counter for stopping time
 		
-		while(k != 1) {
+		/* Keep looping through formulas until k = 1. 
+		 * Count each iteration towards the stopping time. 
+		 */
+		while(n != 1) {
 			
-			if(k % 2 == 0) {
-				k = k / 2; 
+			if(n % 2 == 0) {
+				n = n / 2; 
 			}
 			else {
-				k = 3 * k + 1;
+				n = 3 * n + 1;
 			}
 			
 			stoppingTime++;
@@ -34,14 +47,17 @@ public class MTCollatz {
 		
 		return stoppingTime;
 	}
+}
 
+
+public class MTCollatz {	
+	
+	public static int COUNTER = 2;
+	public static int[] histData = new int [30];
+		
 	public static void main(String[] args) {
 		
-		Scanner scnr = new Scanner(System.in);
 		
-		int k = scnr.nextInt();
-		
-		System.out.println(collatzStoppingTime(k));
 
 	}
 
