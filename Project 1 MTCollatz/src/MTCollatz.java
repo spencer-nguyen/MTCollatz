@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class: COP5518 Computing Essentials
@@ -13,16 +15,27 @@ import java.util.Scanner;
  *              
  */
 
-class collatzCompute extends Thread{
+
+class CollatzCompute implements Runnable{
 	
-	collatzCompute(int n){
-		
-		
-		
-		
-		
-		
-		
+	private int stopTime;
+	
+	@Override
+	public void run(){
+		readAndIncrement();
+	}
+	
+	private int readAndIncrement() {
+		MTCollatz.mutex.lock();
+		try {
+				return MTCollatz.COUNTER;
+		}
+		finally {
+			MTCollatz.COUNTER++;
+			System.out.println(MTCollatz.COUNTER);
+
+			MTCollatz.mutex.unlock();
+		}
 		
 	}
 	
@@ -53,12 +66,40 @@ class collatzCompute extends Thread{
 public class MTCollatz {	
 	
 	public static int COUNTER = 2;
-	public static int[] histData = new int [30];
+	public static int NCollatz;
+	public static int[] histData;
+	public static ReentrantLock mutex = new ReentrantLock();
+
 		
 	public static void main(String[] args) {
 		
+		Scanner scnr = new Scanner(System.in);
+		int numberThreads;
+		int NCollatz;
 		
 
+		
+		ArrayList<CollatzCompute> threads = new ArrayList <CollatzCompute>();
+		
+		numberThreads = scnr.nextInt();
+		NCollatz = scnr.nextInt();
+		
+		while(COUNTER < NCollatz) {
+			
+			for(int i = 0; i < numberThreads; i++) {
+				CollatzCompute singleThread = new CollatzCompute();
+				threads.add(i, singleThread);
+			}	
+			
+			for(int j = 0; j < numberThreads; j++) {
+				if(COUNTER < NCollatz) {
+					threads.get(j).run();
+				}
+			}
+
+			
+
+		}
 	}
 
 }
