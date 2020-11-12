@@ -22,20 +22,23 @@ class CollatzCompute implements Runnable{
 	
 	@Override
 	public void run(){
-		readAndIncrement();
+		MTCollatz.mutex.lock();
+		try {
+			stopTime = getCollatzStoppingTime(readAndIncrement());
+		}
+		finally {
+			MTCollatz.mutex.unlock();
+		}
+		
+		
 	}
 	
 	private int readAndIncrement() {
-		MTCollatz.mutex.lock();
-		try {
-				return MTCollatz.COUNTER;
-		}
-		finally {
-			MTCollatz.COUNTER++;
-			System.out.println(MTCollatz.COUNTER);
-
-			MTCollatz.mutex.unlock();
-		}
+			
+		int temp = MTCollatz.COUNTER;
+		MTCollatz.COUNTER++;
+		
+		return temp;
 		
 	}
 	
@@ -73,12 +76,9 @@ public class MTCollatz {
 		
 	public static void main(String[] args) {
 		
-		Scanner scnr = new Scanner(System.in);
 		int numberThreads;
 		int NCollatz;
-		
-
-		
+		Scanner scnr = new Scanner(System.in);
 		ArrayList<CollatzCompute> threads = new ArrayList <CollatzCompute>();
 		
 		numberThreads = scnr.nextInt();
@@ -96,10 +96,6 @@ public class MTCollatz {
 					threads.get(j).run();
 				}
 			}
-
-			
-
 		}
 	}
-
 }
