@@ -24,22 +24,17 @@ class CollatzCompute implements Runnable{
 	public void run(){
 		MTCollatz.mutex.lock();
 		try {
-			stopTime = getCollatzStoppingTime(readAndIncrement());
+			stopTime = getCollatzStoppingTime(readCounter());
+			MTCollatz.histData[MTCollatz.COUNTER - 2] = stopTime;
+			MTCollatz.COUNTER++;
 		}
 		finally {
 			MTCollatz.mutex.unlock();
 		}
-		
-		
 	}
 	
-	private int readAndIncrement() {
-			
-		int temp = MTCollatz.COUNTER;
-		MTCollatz.COUNTER++;
-		
-		return temp;
-		
+	private int readCounter() {		
+		return MTCollatz.COUNTER;
 	}
 	
 	public int getCollatzStoppingTime(int n) {
@@ -67,10 +62,10 @@ class CollatzCompute implements Runnable{
 
 
 public class MTCollatz {	
-	
+    static final int HIST_SIZE = 20000;
 	public static int COUNTER = 2;
 	public static int NCollatz;
-	public static int[] histData;
+	public static int[] histData = new int[HIST_SIZE];
 	public static ReentrantLock mutex = new ReentrantLock();
 
 		
@@ -84,7 +79,7 @@ public class MTCollatz {
 		numberThreads = scnr.nextInt();
 		NCollatz = scnr.nextInt();
 		
-		while(COUNTER < NCollatz) {
+		while(COUNTER <= NCollatz) {
 			
 			for(int i = 0; i < numberThreads; i++) {
 				CollatzCompute singleThread = new CollatzCompute();
@@ -92,10 +87,15 @@ public class MTCollatz {
 			}	
 			
 			for(int j = 0; j < numberThreads; j++) {
-				if(COUNTER < NCollatz) {
+				if(COUNTER <= NCollatz) {
 					threads.get(j).run();
 				}
 			}
+		}
+		
+		for(int k = 0; k < COUNTER - 2; k++) {
+			
+			System.out.println(histData[k]);
 		}
 	}
 }
