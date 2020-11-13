@@ -18,15 +18,28 @@ import java.util.concurrent.locks.ReentrantLock;
 
 class CollatzCompute implements Runnable{
 	
+	private int n;
 	private int stopTime;
 	
 	@Override
 	public void run(){
 		MTCollatz.mutex.lock();
 		try {
-			stopTime = getCollatzStoppingTime(readCounter());
-			MTCollatz.histData[MTCollatz.COUNTER - 2] = stopTime;
-			MTCollatz.COUNTER++;
+			this.n = readCounter();
+
+		}
+		finally {
+			MTCollatz.mutex.unlock();
+		}
+		
+		
+		this.stopTime = getCollatzStoppingTime(n);
+		
+		
+		MTCollatz.mutex.lock();
+		try {
+		MTCollatz.histData[MTCollatz.COUNTER - 2] = stopTime;
+		MTCollatz.COUNTER++;
 		}
 		finally {
 			MTCollatz.mutex.unlock();
@@ -62,7 +75,7 @@ class CollatzCompute implements Runnable{
 
 
 public class MTCollatz {	
-    static final int HIST_SIZE = 20000;
+    static final int HIST_SIZE = 4000000;
 	public static int COUNTER = 2;
 	public static int NCollatz;
 	public static int[] histData = new int[HIST_SIZE];
