@@ -43,8 +43,14 @@ class CollatzCompute extends Thread{
 		
 		this.stopTime = getCollatzStoppingTime(this.n);
 		
-		MTCollatz.histData[this.n - 2] = this.stopTime;
-		MTCollatz.kFreq[this.stopTime - 1]++;
+		MTCollatz.mutex.lock();
+		try {
+			MTCollatz.histData[this.n - 2] = this.stopTime;
+			MTCollatz.kFreq[this.stopTime - 1]++;
+		}
+		finally {
+			MTCollatz.mutex.unlock();
+		}
 
 	}
 	
@@ -84,6 +90,9 @@ public class MTCollatz {
 		
 	public static void main(String[] args) {
 		int numberThreads;
+		long timeSec;
+		double timeNano;
+		
 		Scanner scnr = new Scanner(System.in);
 		CollatzCompute[] threads = new CollatzCompute[30];
 		
@@ -116,13 +125,13 @@ public class MTCollatz {
 		Instant endTime = Instant.now();
 		Duration processTime = Duration.between(startTime, endTime);
 		
+		timeSec = processTime.getSeconds();
+		timeNano = processTime.getNano(); 
+		
 		for(int l = 0; l < kFreq.length; l++) {
-			System.out.println(kFreq[l]);
+			System.out.println((l + 1) + "," + kFreq[l]);
 		}
 		
-		
-		System.out.println(processTime.toSeconds());
-		
-
+		System.out.println(NCollatz + "," + numberThreads + "," + timeSec + "." + (int)timeNano);
 	}
 }
