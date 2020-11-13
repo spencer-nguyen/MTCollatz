@@ -22,7 +22,7 @@ import java.lang.Thread;
 class CollatzCompute extends Thread{
 	
 	private int n;
-	private long stopTime;
+	private int stopTime;
 	
 	@Override
 	public void run(){
@@ -34,27 +34,21 @@ class CollatzCompute extends Thread{
 				MTCollatz.COUNTER++;
 			}
 			else {
-				this.n = 1;
+				return;
 			}
 		}
 		finally {
 			MTCollatz.mutex.unlock();
 		}
 		
-		
 		this.stopTime = getCollatzStoppingTime(this.n);
 		
-		
-	//	MTCollatz.mutex.lock();
-	//	try {
-	//	MTCollatz.histData[n - 2] = this.stopTime;
-	//	}
-	//	finally {
-	//		MTCollatz.mutex.unlock();
-	//	}
+		MTCollatz.histData[this.n - 2] = this.stopTime;
+		MTCollatz.kFreq[this.stopTime - 1]++;
+
 	}
 	
-	public long getCollatzStoppingTime(int n) {
+	public int getCollatzStoppingTime(int n) {
 		
 		int stoppingTime = 0; //counter for stopping time
 		long temp = n;
@@ -80,9 +74,10 @@ class CollatzCompute extends Thread{
 
 
 public class MTCollatz {	
-    static final int HIST_SIZE = 50000000;
+    static final int HIST_SIZE = 1000000;
 	public static int COUNTER = 2;
 	public static int NCollatz;
+	public static int[] kFreq = new int[1000];
 	public static long[] histData = new long[HIST_SIZE];
 	public static ReentrantLock mutex = new ReentrantLock();
 	
@@ -92,11 +87,9 @@ public class MTCollatz {
 		Scanner scnr = new Scanner(System.in);
 		CollatzCompute[] threads = new CollatzCompute[30];
 		
-		
-		numberThreads = scnr.nextInt();
 		NCollatz = scnr.nextInt();
+		numberThreads = scnr.nextInt();
 		
-
 		
 		Instant startTime = Instant.now();
 		
@@ -114,29 +107,22 @@ public class MTCollatz {
 				try {
 					threads[k].join();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}
-			
+			}	
 		}
 
-		
-
-			
-		
 		
 		Instant endTime = Instant.now();
 		Duration processTime = Duration.between(startTime, endTime);
 		
+		for(int l = 0; l < kFreq.length; l++) {
+			System.out.println(kFreq[l]);
+		}
+		
+		
 		System.out.println(processTime.toSeconds());
 		
-		/*for(int k = 0; k < COUNTER - 2; k++) {
-			
-			System.out.println(histData[k]);
-		}*/
-		
-
 
 	}
 }
