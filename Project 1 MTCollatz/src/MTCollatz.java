@@ -1,6 +1,9 @@
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
+import java.lang.Thread;
 
 /**
  * Class: COP5518 Computing Essentials
@@ -16,17 +19,18 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 
 
-class CollatzCompute implements Runnable{
+class CollatzCompute extends Thread{
 	
 	private int n;
-	private int stopTime;
+	private long stopTime;
 	
 	@Override
 	public void run(){
+		
 		MTCollatz.mutex.lock();
 		try {
-			this.n = readCounter();
-
+			this.n = MTCollatz.COUNTER;
+			MTCollatz.COUNTER++;
 		}
 		finally {
 			MTCollatz.mutex.unlock();
@@ -36,34 +40,34 @@ class CollatzCompute implements Runnable{
 		this.stopTime = getCollatzStoppingTime(n);
 		
 		
-		MTCollatz.mutex.lock();
-		try {
-		MTCollatz.histData[MTCollatz.COUNTER - 2] = stopTime;
-		MTCollatz.COUNTER++;
-		}
-		finally {
-			MTCollatz.mutex.unlock();
-		}
+	//	MTCollatz.mutex.lock();
+	//	try {
+	//	MTCollatz.histData[n - 2] = stopTime;
+	//	}
+	//	finally {
+	//		MTCollatz.mutex.unlock();
+	//	}
 	}
 	
-	private int readCounter() {		
+	/*private int readCounter() {		
 		return MTCollatz.COUNTER;
-	}
+	}*/
 	
-	public int getCollatzStoppingTime(int n) {
+	public long getCollatzStoppingTime(int n) {
 		
 		int stoppingTime = 0; //counter for stopping time
+		long temp = n;
 		
 		/* Keep looping through formulas until k = 1. 
 		 * Count each iteration towards the stopping time. 
 		 */
-		while(n != 1) {
+		while(temp != 1) {
 			
-			if(n % 2 == 0) {
-				n = n / 2; 
+			if(temp % 2 == 0) {
+				temp = temp / 2; 
 			}
 			else {
-				n = 3 * n + 1;
+				temp = 3 * temp + 1;
 			}
 			
 			stoppingTime++;
@@ -77,38 +81,63 @@ class CollatzCompute implements Runnable{
 public class MTCollatz {	
     static final int HIST_SIZE = 4000000;
 	public static int COUNTER = 2;
-	public static int NCollatz;
 	public static int[] histData = new int[HIST_SIZE];
 	public static ReentrantLock mutex = new ReentrantLock();
-
+	
 		
 	public static void main(String[] args) {
-		
 		int numberThreads;
 		int NCollatz;
 		Scanner scnr = new Scanner(System.in);
 		ArrayList<CollatzCompute> threads = new ArrayList <CollatzCompute>();
 		
+		
+		
 		numberThreads = scnr.nextInt();
 		NCollatz = scnr.nextInt();
 		
+		for(int i = 0; i < numberThreads; i++) {
+			CollatzCompute singleThread = new CollatzCompute();
+			threads.add(i, singleThread);
+		}	
+		
+		Instant startTime = Instant.now();
+		
 		while(COUNTER <= NCollatz) {
-			
-			for(int i = 0; i < numberThreads; i++) {
-				CollatzCompute singleThread = new CollatzCompute();
-				threads.add(i, singleThread);
-			}	
 			
 			for(int j = 0; j < numberThreads; j++) {
 				if(COUNTER <= NCollatz) {
 					threads.get(j).run();
+
+
+				}
+			}
+			
+			for(int k = 0; k < numberThreads; k++) {
+				try {
+					threads.get(k).join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		}
+
 		
-		for(int k = 0; k < COUNTER - 2; k++) {
+
+			
+		
+		
+		Instant endTime = Instant.now();
+		Duration processTime = Duration.between(startTime, endTime);
+		
+		System.out.println(processTime.toMillis());
+		
+		/*for(int k = 0; k < COUNTER - 2; k++) {
 			
 			System.out.println(histData[k]);
-		}
+		}*/
+		
+
+
 	}
 }
