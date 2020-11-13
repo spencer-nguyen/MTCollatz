@@ -29,29 +29,30 @@ class CollatzCompute extends Thread{
 		
 		MTCollatz.mutex.lock();
 		try {
-			this.n = MTCollatz.COUNTER;
-			MTCollatz.COUNTER++;
+			if(MTCollatz.COUNTER <= MTCollatz.NCollatz) {
+				this.n = MTCollatz.COUNTER;
+				MTCollatz.COUNTER++;
+			}
+			else {
+				this.n = 1;
+			}
 		}
 		finally {
 			MTCollatz.mutex.unlock();
 		}
 		
 		
-		this.stopTime = getCollatzStoppingTime(n);
+		this.stopTime = getCollatzStoppingTime(this.n);
 		
 		
 	//	MTCollatz.mutex.lock();
 	//	try {
-	//	MTCollatz.histData[n - 2] = stopTime;
+	//	MTCollatz.histData[n - 2] = this.stopTime;
 	//	}
 	//	finally {
 	//		MTCollatz.mutex.unlock();
 	//	}
 	}
-	
-	/*private int readCounter() {		
-		return MTCollatz.COUNTER;
-	}*/
 	
 	public long getCollatzStoppingTime(int n) {
 		
@@ -79,47 +80,45 @@ class CollatzCompute extends Thread{
 
 
 public class MTCollatz {	
-    static final int HIST_SIZE = 4000000;
+    static final int HIST_SIZE = 50000000;
 	public static int COUNTER = 2;
-	public static int[] histData = new int[HIST_SIZE];
+	public static int NCollatz;
+	public static long[] histData = new long[HIST_SIZE];
 	public static ReentrantLock mutex = new ReentrantLock();
 	
 		
 	public static void main(String[] args) {
 		int numberThreads;
-		int NCollatz;
 		Scanner scnr = new Scanner(System.in);
-		ArrayList<CollatzCompute> threads = new ArrayList <CollatzCompute>();
-		
+		CollatzCompute[] threads = new CollatzCompute[30];
 		
 		
 		numberThreads = scnr.nextInt();
 		NCollatz = scnr.nextInt();
 		
-		for(int i = 0; i < numberThreads; i++) {
-			CollatzCompute singleThread = new CollatzCompute();
-			threads.add(i, singleThread);
-		}	
+
 		
 		Instant startTime = Instant.now();
 		
 		while(COUNTER <= NCollatz) {
 			
+			for(int i = 0; i < numberThreads; i++) {
+				threads[i] = new CollatzCompute();
+			}	
+			
 			for(int j = 0; j < numberThreads; j++) {
-				if(COUNTER <= NCollatz) {
-					threads.get(j).run();
-
-
-				}
+				threads[j].start();
 			}
 			
 			for(int k = 0; k < numberThreads; k++) {
 				try {
-					threads.get(k).join();
+					threads[k].join();
 				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
+			
 		}
 
 		
@@ -130,7 +129,7 @@ public class MTCollatz {
 		Instant endTime = Instant.now();
 		Duration processTime = Duration.between(startTime, endTime);
 		
-		System.out.println(processTime.toMillis());
+		System.out.println(processTime.toSeconds());
 		
 		/*for(int k = 0; k < COUNTER - 2; k++) {
 			
