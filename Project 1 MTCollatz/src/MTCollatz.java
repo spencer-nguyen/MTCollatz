@@ -1,6 +1,5 @@
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 import java.lang.Thread;
@@ -21,11 +20,15 @@ import java.lang.Thread;
 
 class CollatzCompute extends Thread{
 	
-	private int n;
-	private int stopTime;
+	private int n;       // thread to compute Collatz sequence for n
+	private int stopTime;// stopping time of Collatz sequence
 	
 	@Override
 	public void run(){
+		/*----------------------------------------------------------------------------*/
+		/* This portion of the thread will access the counter that determines the next
+		 * sequence to compute. Therefore it requires locking when pulling the current
+		 * number and incrementing.*/
 		
 		MTCollatz.mutex.lock();
 		try {
@@ -41,11 +44,16 @@ class CollatzCompute extends Thread{
 			MTCollatz.mutex.unlock();
 		}
 		
+		/*----------------------------------------------------------------------------*/
+		/* Portion of thread to compute concurrently. */
+		
 		this.stopTime = getCollatzStoppingTime(this.n);
+		
+		/*----------------------------------------------------------------------------*/
+		/* This portion increments the frequency of stopping times calculated for 1 -1000.*/
 		
 		MTCollatz.mutex.lock();
 		try {
-			MTCollatz.histData[this.n - 2] = this.stopTime;
 			MTCollatz.kFreq[this.stopTime - 1]++;
 		}
 		finally {
@@ -54,10 +62,15 @@ class CollatzCompute extends Thread{
 
 	}
 	
+	/**
+	 * This method takes the current number and computes the Collatz sequence stopping time.
+	 * @param int n
+	 * @return int stopTime
+	 */
 	public int getCollatzStoppingTime(int n) {
 		
-		int stoppingTime = 0; //counter for stopping time
-		long temp = n;
+		int stoppingTime = 0;// counter for stopping time
+		long temp = n;       // temp variable for Collatz sequence
 		
 		/* Keep looping through formulas until k = 1. 
 		 * Count each iteration towards the stopping time. 
@@ -79,39 +92,42 @@ class CollatzCompute extends Thread{
 }
 
 
-public class MTCollatz {	
-    static final int HIST_SIZE = 1000000;
-	public static int COUNTER = 2;
-	public static int NCollatz;
-	public static int[] kFreq = new int[1000];
-	public static long[] histData = new long[HIST_SIZE];
+public class MTCollatz {	 
+	
+	public static int COUNTER = 2;            // left bound of Collatz sequences to calculate
+	public static int NCollatz;               // right bound of Collatz sequences to calculate
+	public static int[] kFreq = new int[1000];// array to store frequency of stopping times 
 	public static ReentrantLock mutex = new ReentrantLock();
 	
 		
 	public static void main(String[] args) {
-		int numberThreads;
-		long timeSec;
-		double timeNano;
+		
+		int numberThreads;// number of working threads
+		long timeSec;     // compute time in seconds
+		double timeNano;  // compute time in nanoseconds
 		
 		Scanner scnr = new Scanner(System.in);
 		CollatzCompute[] threads = new CollatzCompute[30];
 		
+		/* Get arguments from user.*/
 		NCollatz = scnr.nextInt();
 		numberThreads = scnr.nextInt();
 		
-		
-		Instant startTime = Instant.now();
+		Instant startTime = Instant.now();// begin time stamp
 		
 		while(COUNTER <= NCollatz) {
 			
+			/* Make new threads to user specified number of worker threads. */
 			for(int i = 0; i < numberThreads; i++) {
 				threads[i] = new CollatzCompute();
 			}	
 			
+			/* Start threads to begin computation. */
 			for(int j = 0; j < numberThreads; j++) {
 				threads[j].start();
 			}
 			
+			/* Kill worker threads by joining to main. */
 			for(int k = 0; k < numberThreads; k++) {
 				try {
 					threads[k].join();
@@ -122,16 +138,18 @@ public class MTCollatz {
 		}
 
 		
-		Instant endTime = Instant.now();
-		Duration processTime = Duration.between(startTime, endTime);
+		Instant endTime = Instant.now();                            // end time stamp
+		Duration processTime = Duration.between(startTime, endTime);// get program duration
 		
 		timeSec = processTime.getSeconds();
 		timeNano = processTime.getNano(); 
 		
+		/* Print stopping time frequency to stderr. */
 		for(int l = 0; l < kFreq.length; l++) {
-			System.out.println((l + 1) + "," + kFreq[l]);
+			System.err.println((l + 1) + "," + kFreq[l]);
 		}
 		
+		/* Print right bound collatz, number of worker threads, and time elapsed to output. */
 		System.out.println(NCollatz + "," + numberThreads + "," + timeSec + "." + (int)timeNano);
 	}
 }
